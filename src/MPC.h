@@ -11,7 +11,10 @@ class MPC {
   MPC();
 
   virtual ~MPC();
-
+size_t getN();
+double getDt();
+void init(size_t pN, double pDt);
+ // void init(size_t N, double dt);
   // Solve the model given an initial state and polynomial coefficients.
   // Return the first actuatotions.
   vector<double> Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs);
