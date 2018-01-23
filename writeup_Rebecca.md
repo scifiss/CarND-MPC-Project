@@ -17,9 +17,9 @@ In the kinematic model, there are 6 state variables, which are updated like belo
 ```
     x = x + v*cos(ψ)* dt
     y = y + v*sin(psi)*dt    
-    ψ = ψ +(v/L~f~)*δ*dt
+    ψ = ψ +(v/L<sub>f</sub>)*δ*dt
     v = v + a*dt
-    cte​=cte​+vt​*sin(eψt​)*dt
+    cte =cte +v*sin(eψ)*dt
     eψ = eψ +(v/L_f)*δ*dt
 	
 ```
@@ -27,7 +27,7 @@ where
 *x* and *y* are the position values in vehicle's coordinate, 
 *v* is the velocity value, 
 *ψ* is the angle of the car's heading from x axis, 
-cross track error *cte* = y-f(x) where f(x) is the reference line.
+cross track error *cte* = y-f(x) where f(x) is the reference line. 
 
 ### 3. Actuators (control inputs): *δ*,*a*
 The car has 3 actuators: the steering wheel, the throttle pedal and the brake pedal. In this project, the steering wheel accepts input of steering angle *δ*, while the throttle and brake pedal combine to one actuator *a* for simplicity, with positive signifies acceleration, and negative signifies braking.
