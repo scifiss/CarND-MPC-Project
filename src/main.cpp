@@ -4,13 +4,13 @@
 #include <iostream>
 #include <thread>
 #include <vector>
-#include "Eigen-3.3/Eigen/Core"
-#include "Eigen-3.3/Eigen/QR"
+
+
 #include "MPC.h"
 #include "json.hpp"
-//#include "matplotlibcpp.h"
+#include "matplotlibcpp.h"
 
-//namespace plt = matplotlibcpp;
+namespace plt = matplotlibcpp;
 // for convenience
 using json = nlohmann::json;
 using Eigen::VectorXd;
@@ -21,35 +21,11 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
-// Checks if the SocketIO event has JSON data.
-// If there is data the JSON object in string format will be returned,
-// else the empty string "" will be returned.
-string hasData(string s) {
-  auto found_null = s.find("null");
-  auto b1 = s.find_first_of("[");
-  auto b2 = s.rfind("}]");
-  if (found_null != string::npos) {
-    return "";
-  } else if (b1 != string::npos && b2 != string::npos) {
-    return s.substr(b1, b2 - b1 + 2);
-  }
-  return "";
-}
-
-// Evaluate a polynomial.
-double polyeval(VectorXd coeffs, double x) {
-  double result = 0.0;
-  for (int i = 0; i < coeffs.size(); i++) {
-    result += coeffs[i] * pow(x, i);
-  }
-  return result;
-}
-
 // Fit a polynomial.
 // Adapted from
 // https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
-VectorXd polyfit(VectorXd xvals, VectorXd yvals,
-                        int order) {
+VectorXd polyfit(VectorXd xvals, VectorXd yvals,int order)
+{
   assert(xvals.size() == yvals.size());
   assert(order >= 1 && order <= xvals.size() - 1);
   MatrixXd A(xvals.size(), order + 1);
@@ -68,6 +44,30 @@ VectorXd polyfit(VectorXd xvals, VectorXd yvals,
   auto result = Q.solve(yvals);
   return result;
 }
+
+double polyeval(VectorXd coeffs, double x) {
+  double result = 0.0;
+  for (int i = 0; i < coeffs.size(); i++) {
+    result += coeffs[i] * pow(x, i);
+  }
+  return result;
+}
+// Checks if the SocketIO event has JSON data.
+// If there is data the JSON object in string format will be returned,
+// else the empty string "" will be returned.
+string hasData(string s) {
+  auto found_null = s.find("null");
+  auto b1 = s.find_first_of("[");
+  auto b2 = s.rfind("}]");
+  if (found_null != string::npos) {
+    return "";
+  } else if (b1 != string::npos && b2 != string::npos) {
+    return s.substr(b1, b2 - b1 + 2);
+  }
+  return "";
+}
+
+
 
 int main(int argc, char *argv[]) {
   uWS::Hub h;
@@ -109,7 +109,9 @@ int main(int argc, char *argv[]) {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];  // mph
-          //v = v*0.44704;  // m/s  ???
+          v = v*0.44704;  // m/s  ???
+          double delta = j[1]["steering_angle"];  // (-1,1)
+          delta = -delta *deg2rad(25);
 
           // change from global coords to car coords
           VectorXd x_car = VectorXd( ptsx.size() );
@@ -125,7 +127,6 @@ int main(int argc, char *argv[]) {
           // fit the waypoints to polynomial of order 3
           auto coeffs = polyfit(x_car, y_car, 3);
 
-
           // define initial state
           // x,y,psi start at 0 for a car at the beginning
           double x0 = 0.0;
@@ -133,10 +134,20 @@ int main(int argc, char *argv[]) {
           double psi0 = 0.0;
           double v0 = v;
           double cte0 = polyeval(coeffs, x0)-y0;
-          double epsi0 = -atan(coeffs[1]);
+          double epsi0 =  -atan(coeffs[1]); //psi0 -atan(mpc.polyFirstDeriv(x0))
+
+           // 100ms latency
+          double latency = 0.1; // 100 ms
+          double Lf = 2.67;
+          double x1 = x0 + v0*cos(psi0)*latency;
+          double y1 = y0 + v0*sin(psi0)*latency;
+          double psi1 = psi0 + v0/Lf* delta * latency;
+          double cte1 = cte0 + v0 * sin(epsi0)*latency;
+          double epsi1 = epsi0 + v0/Lf* delta * latency ;
+          double v1 = v0 + delta * latency;
 
           VectorXd initState(6);
-          initState << x0,y0,psi0,v0,cte0,epsi0;
+          initState << x1,y1,psi1,v1,cte1,epsi1;
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -147,14 +158,14 @@ int main(int argc, char *argv[]) {
           auto result = mpc.Solve(initState, coeffs);
 
           size_t N = mpc.getN();
-          double steer_value = - result[2*N];
+          double delta_value = - result[2*N];
           double throttle_value = result[2*N+1];
 
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          msgJson["steering_angle"] = steer_value; // /deg2rad(25);
+          msgJson["steering_angle"] = delta_value /deg2rad(25);
           msgJson["throttle"] = throttle_value;
 
           //Display the MPC predicted trajectory

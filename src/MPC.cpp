@@ -1,10 +1,11 @@
 #include "MPC.h"
-#include <cppad/cppad.hpp>
+
 #include <cppad/ipopt/solve.hpp>
-#include "Eigen-3.3/Eigen/Core"
+
 
 using CppAD::AD;
-
+using Eigen::VectorXd;
+using Eigen::MatrixXd;
 // TODO: Set the timestep length and duration
 
 
@@ -18,11 +19,11 @@ using CppAD::AD;
 // presented in the classroom matched the previous radius.
 //
 // This is the length from front to CoG that has a similar radius.
-const double Lf = 2.67;
+
 // Both the reference cross track and orientation errors are 0.
 // The reference velocity is set to 40 mph.
 double ref_v = 40;
-
+const double Lf = 2.67;
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
 // when one variable starts and another ends to make our lifes easier.
@@ -49,12 +50,33 @@ double r_a=50;  //25
 double r_prev_delta=280; //300
 double r_prev_a=100;  //125
 
+// Evaluate a polynomial.
+AD<double> polyeval(VectorXd coeffs, AD<double> x) {
+  AD<double> result = 0.0;
+  for (int i = 0; i < coeffs.size(); i++) {
+    result += coeffs[i] * pow(x, i);
+  }
+  return result;
+}
+
+
+// Return the tangential of 3th order polynomial at given point
+AD<double> polyFirstDeriv(VectorXd coeffs,AD<double> x)
+{
+    AD<double> result = 0.0;
+    for (int i=1;i<coeffs.size();i++)
+    {
+        result += i*coeffs[i]*pow(x,i-1);
+    }
+
+    return result;
+}
 
 class FG_eval {
  public:
   // Fitted polynomial coefficients
-  Eigen::VectorXd coeffs;
-  FG_eval(Eigen::VectorXd coeffs) { this->coeffs = coeffs; }
+  VectorXd coeffs;
+  FG_eval(VectorXd coeffs) { this->coeffs = coeffs; }
 
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
   void operator()(ADvector& fg, const ADvector& vars)
@@ -126,8 +148,8 @@ class FG_eval {
       AD<double> delta0 = vars[delta_start + t - 1];
       AD<double> a0 = vars[a_start + t - 1];
 
-      AD<double> f0 = coeffs[0] + coeffs[1] * x0 ;
-      AD<double> psides0 = CppAD::atan(coeffs[1]);
+      AD<double> f0 = polyeval(coeffs,x0) ;// coeffs[0] + coeffs[1] * x0 ;
+      AD<double> psides0 = CppAD::atan(polyFirstDeriv(coeffs,x0));
       //f0 = polyeval(coeffs,x0);
 
       // Here's `x` to get you started.
@@ -176,7 +198,7 @@ double MPC::getDt()
     return dt;
 
 }
-vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
+vector<double> MPC::Solve(VectorXd state, VectorXd coeffs) {
   bool ok = true;
   size_t i;
   typedef CPPAD_TESTVECTOR(double) Dvector;
@@ -202,19 +224,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   double v = state[3];
   double cte = state[4];
   double epsi = state[5];
-
-  // 100ms latency
-  double dt = 0.1; // 100 ms
-  x = x + v*cos(psi)*dt;
-  y = y + v*sin(psi)*dt;
-  //psi = psi + v/Lf* 0 * dt;
-  //v = v;
-  cte = cte + v * sin(epsi)*dt;
-  //epsi = epsi;
-
-
-
-
 
   vars[x_start] = x;
   vars[y_start] = y;
