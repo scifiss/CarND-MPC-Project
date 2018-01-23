@@ -9,16 +9,36 @@ The goals / steps of this project are the following:
 ## [Rubric](https://review.udacity.com/#!/rubrics/896/view) Points
 
 ### 1. statement of the problem
-We need to navigate the vehicle based on the waypoints from GPS, through steering and throttle. The points on the track are given for every short length by the simulator. We will fit the points with a polynomial and treat it as the reference for the vehicle to follow. The vihicle has the following controls: steering angle (-25~25 degrees) and throttle (-1~1). The vehicle can't have sharp turns. The vehicle also has a latency from the commands to the vehicle's actual action. The controller gives predicted command serials that minimize the difference between the vehicle's predicted path and the polynomial fitted waypoints and feed to vehicle. The commands are updated for every specified time span.
+We need to navigate the vehicle based on the waypoints from GPS, through steering and throttle. The points on the track are given for every short length by the simulator. The points are fitted with a polynomial of order 3 and treated as the reference for the vehicle to follow. 
+The car is a mimic of a bicycle. The two front wheels act like one wheel, and the two back wheels act like one wheel. The elements of dynamic model like slip angle, slip ratio (sliding friction), etc. are ignored.
 
-### 2. kinematic model and dynamic model
-The car is a mimic of a bicycle. The two front wheels act like one wheel, and the two back wheels act like one wheel. The elements of dynamic model like sliding friction are ignored.
+### 2. States: *x*,*y*,*ψ*,*v*,*cte*,
+In the kinematic model, there are 6 state variables, which are updated like below.
 ```
     x = x + v*cos(ψ)* dt
-    y = y + v sin(psi) dt
-    v=v+a*dt
-    ψ=ψ+(v/L_f)*δ*dt
+    y = y + v*sin(psi)*dt    
+    ψ = ψ +(v/L~f~)*δ*dt
+    v = v + a*dt
+    cte​=cte​+vt​*sin(eψt​)*dt
+    eψ = eψ +(v/L_f)*δ*dt
+	
 ```
+where 
+*x* and *y* are the position values in vehicle's coordinate, 
+*v* is the velocity value, 
+*ψ* is the angle of the car's heading from x axis, 
+cross track error *cte* = y-f(x) where f(x) is the reference line.
+
+### 3. Actuators (control inputs): *δ*,*a*
+The car has 3 actuators: the steering wheel, the throttle pedal and the brake pedal. In this project, the steering wheel accepts input of steering angle *δ*, while the throttle and brake pedal combine to one actuator *a* for simplicity, with positive signifies acceleration, and negative signifies braking.
+ 
+
+The vehicle has the following controls: steering angle (-25~25 degrees) and throttle (-1~1). The vehicle can't have sharp turns. The vehicle also has a latency from the commands to the vehicle's actual action. The controller gives predicted command serials that minimize the difference between the vehicle's predicted path and the polynomial fitted waypoints and feed to vehicle. The commands are updated for every specified time span.
+
+
+
+
+
 ### 3. initial states 
 There are 6 state components: the position (x,y) of the car in the local coordinants, the yaw of the car, the velocity, the difference between predicted line and actual line, and the difference between predicted yaw and actual yaw.
 The received x,y values are at global coordinates. They need to be converted to the vehicle's coordinates.
