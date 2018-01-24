@@ -40,14 +40,14 @@ size_t a_start = delta_start + N - 1;
 
 // factors on cost functions
 // on reference state
-double r_cte=40;//1500; // 1500  2000 from faq
-double r_epsi=40; //500;   2000 from faq
+double r_cte=100;//1500; // 1500  2000 from faq
+double r_epsi=100; //500;   2000 from faq
 double r_v=1.0;//200;   1.0 from faq
 // on actuators
 double r_delta=150; //50;  //50   5 from faq
 double r_a=100; //25;  //25,50    5 from faq
 // on sequential actuators
-double r_prev_delta=400; //280; //300   200 from faq
+double r_prev_delta=1000; //400; //280; //300   200 from faq
 double r_prev_a=200; //100;  //125   10 from faq
 
 // Evaluate a polynomial.
@@ -223,12 +223,12 @@ vector<double> MPC::Solve(VectorXd state, VectorXd coeffs) {
   for ( i = 0; i < n_vars; i++) {
     vars[i] = 0.0;
   }
-  double x = state[0];
-  double y = state[1];
-  double psi = state[2];
-  double v = state[3];
-  double cte = state[4];
-  double epsi = state[5];
+  const double x = state[0];
+  const double y = state[1];
+  const double psi = state[2];
+  const double v = state[3];
+  const double cte = state[4];
+  const double epsi = state[5];
 
   vars[x_start] = x;
   vars[y_start] = y;

@@ -8,9 +8,9 @@
 
 #include "MPC.h"
 #include "json.hpp"
-#include "matplotlibcpp.h"
+//#include "matplotlibcpp.h"
 
-namespace plt = matplotlibcpp;
+//namespace plt = matplotlibcpp;
 // for convenience
 using json = nlohmann::json;
 using Eigen::VectorXd;
@@ -51,6 +51,25 @@ double polyeval(VectorXd coeffs, double x) {
     result += coeffs[i] * pow(x, i);
   }
   return result;
+}
+
+void CoordConversion(vector<double> &pointx, vector<double> &pointy,
+                     double orig1[2], double psi1,
+                     double orig2[2], double psi2,
+                     VectorXd& newpx, VectorXd& newpy)
+{
+
+            newpx = VectorXd( pointx.size() );
+           newpy = VectorXd( pointy.size() );
+          for (size_t i=0;i<pointx.size(); i++)
+          {
+              double dx = pointx[i]+orig1[0] - orig2[0];
+              double dy = pointy[i]+orig1[1] - orig2[1];
+              double dpsi = psi1 - psi2;
+              newpx[i] = dx*cos(dpsi) - dy*sin(dpsi);
+              newpy[i] = dx*sin(dpsi) + dy*cos(dpsi);
+          }
+          return;
 }
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
@@ -119,19 +138,13 @@ int main(int argc, char *argv[]) {
           //delta = -delta *deg2rad(25);   // Is this correct?
           delta = -delta;
           double a = j[1]["throttle"];
-
-
-          // change from global coords to car coords
+         // change from global coords to car coords
           VectorXd x_car = VectorXd( ptsx.size() );
           VectorXd y_car = VectorXd( ptsy.size() );
-          for (size_t i=0;i<ptsx.size(); i++)
-          {
-              double dx = ptsx[i] - px;
-              double dy = ptsy[i] - py;
-              x_car[i] = dx*cos(psi) + dy*sin(psi);
-              y_car[i] = -dx*sin(psi) + dy*cos(psi);
-          }
-
+          double orig1[2] =  {0.0,0.0};
+          double orig2[2] =  {px,py};
+          CoordConversion(ptsx, ptsy, orig1,  0, orig2,  psi,
+                     x_car, y_car);
 
           // fit the waypoints to polynomial of order 3
           auto coeffs = polyfit(x_car, y_car, 3);
