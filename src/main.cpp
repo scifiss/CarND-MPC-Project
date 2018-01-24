@@ -117,6 +117,7 @@ int main(int argc, char *argv[]) {
           double delta = j[1]["steering_angle"];  // (-1,1)
           cout<<"delta received: "<<delta<<endl;
           //delta = -delta *deg2rad(25);   // Is this correct?
+          delta = -delta;
           double a = j[1]["throttle"];
 
 
@@ -198,10 +199,12 @@ int main(int argc, char *argv[]) {
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
 
-          for (int i = 0;  i < x_car.size();  i++)
+          double di = 2.5;
+          int npoint = 25;
+          for (int i = 0;  i < npoint;  i++)
           {
-            next_x_vals.push_back(x_car[i] ) ;
-            next_y_vals.push_back(polyeval(coeffs, x_car[i]) ) ;
+            next_x_vals.push_back(di*i) ;
+            next_y_vals.push_back(polyeval(coeffs, di*i) ) ;
           }
 
           msgJson["next_x"] = next_x_vals;

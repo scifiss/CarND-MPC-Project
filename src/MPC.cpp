@@ -22,7 +22,7 @@ using Eigen::MatrixXd;
 
 // Both the reference cross track and orientation errors are 0.
 // The reference velocity is set to 40 mph.
-double ref_v = 25; //50; //40*0.44704;  // 40 mph converted to m/s
+double ref_v = 30; //50; //40*0.44704;  // 40 mph converted to m/s
 const double Lf = 2.67;
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
@@ -30,11 +30,11 @@ const double Lf = 2.67;
 size_t N = 12;
 double dt = 0.12;
 size_t x_start = 0;
-size_t y_start = x_start + N;
-size_t psi_start = y_start + N;
-size_t v_start = psi_start + N;
-size_t cte_start = v_start + N;
-size_t epsi_start = cte_start + N;
+size_t y_start = x_start + N;  //N
+size_t psi_start = y_start + N; //2N
+size_t v_start = psi_start + N; //3N
+size_t cte_start = v_start + N; //4N
+size_t epsi_start = cte_start + N; //5N
 size_t delta_start = epsi_start + N;
 size_t a_start = delta_start + N - 1;
 
