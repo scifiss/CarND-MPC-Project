@@ -76,12 +76,15 @@ int main(int argc, char *argv[]) {
   MPC mpc;
   size_t N=12;
   double dt = 0.1;
-  if (argc>3)
+  if (argc>1)
   {
-      N = atoi(argv[1]);
-      dt = atof(argv[2]);
-      mpc.init(N,dt);
-       std::cout << N <<","<<dt << std::endl;
+//      N = atoi(argv[1]);
+//      dt = atof(argv[2]);
+//      mpc.init(N,dt);
+      double refV = atof(argv[1]);
+      mpc.setRefV(refV);
+       std::cout <<"Set parameters for MPC: "<< N <<","<<dt <<","<<refV<< std::endl;
+
   }
 
 
@@ -107,11 +110,15 @@ int main(int argc, char *argv[]) {
           // car positions in global coords
           double px = j[1]["x"];
           double py = j[1]["y"];
-          double psi = j[1]["psi"];
+          double psi = j[1]["psi"];  // psi is in degrees, cos and sin work on radians, should be deg2rad(psi)!
+		  //cout<<"psi from "<<j[1]["psi"]<<" to "<<psi<<endl;
           double v = j[1]["speed"];  // mph
-          v = v*0.44704;  // m/s  ???
+          v = v*0.44704;  // m/s
           double delta = j[1]["steering_angle"];  // (-1,1)
-          delta = -delta *deg2rad(25);
+          cout<<"delta received: "<<delta<<endl;
+          //delta = -delta *deg2rad(25);   // Is this correct?
+          double a = j[1]["throttle"];
+
 
           // change from global coords to car coords
           VectorXd x_car = VectorXd( ptsx.size() );
@@ -124,6 +131,7 @@ int main(int argc, char *argv[]) {
               y_car[i] = -dx*sin(psi) + dy*cos(psi);
           }
 
+
           // fit the waypoints to polynomial of order 3
           auto coeffs = polyfit(x_car, y_car, 3);
 
@@ -132,19 +140,19 @@ int main(int argc, char *argv[]) {
           double x0 = 0.0;
           double y0 = 0.0;
           double psi0 = 0.0;
-          double v0 = v;
+          double v0 = v;  // m/s
           double cte0 = polyeval(coeffs, x0)-y0;
           double epsi0 =  -atan(coeffs[1]); //psi0 -atan(mpc.polyFirstDeriv(x0))
 
            // 100ms latency
           double latency = 0.1; // 100 ms
-          double Lf = 2.67;
+          double Lf = 2.67; // m
           double x1 = x0 + v0*cos(psi0)*latency;
           double y1 = y0 + v0*sin(psi0)*latency;
           double psi1 = psi0 + v0/Lf* delta * latency;
           double cte1 = cte0 + v0 * sin(epsi0)*latency;
           double epsi1 = epsi0 + v0/Lf* delta * latency ;
-          double v1 = v0 + delta * latency;
+          double v1 = v0 + a * latency;
 
           VectorXd initState(6);
           initState << x1,y1,psi1,v1,cte1,epsi1;
@@ -158,14 +166,14 @@ int main(int argc, char *argv[]) {
           auto result = mpc.Solve(initState, coeffs);
 
           size_t N = mpc.getN();
-          double delta_value = - result[2*N];
+          double delta_value =  result[2*N];
           double throttle_value = result[2*N+1];
 
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          msgJson["steering_angle"] = delta_value /deg2rad(25);
+          msgJson["steering_angle"] = -delta_value /(deg2rad(25)*Lf);
           msgJson["throttle"] = throttle_value;
 
           //Display the MPC predicted trajectory

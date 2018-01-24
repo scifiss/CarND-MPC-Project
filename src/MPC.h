@@ -16,6 +16,7 @@ class MPC {
   virtual ~MPC();
 size_t getN();
 double getDt();
+void setRefV(double desiredV);
 void init(size_t pN, double pDt);
  // void init(size_t N, double dt);
   // Solve the model given an initial state and polynomial coefficients.
