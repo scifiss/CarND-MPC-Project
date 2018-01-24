@@ -40,14 +40,14 @@ size_t a_start = delta_start + N - 1;
 
 // factors on cost functions
 // on reference state
-double r_cte=100;//1500; // 1500  2000 from faq
-double r_epsi=100; //500;   2000 from faq
+double r_cte=200;//1500; // 1500  2000 from faq
+double r_epsi=200; //500;   2000 from faq
 double r_v=1.0;//200;   1.0 from faq
 // on actuators
 double r_delta=150; //50;  //50   5 from faq
 double r_a=100; //25;  //25,50    5 from faq
 // on sequential actuators
-double r_prev_delta=1000; //400; //280; //300   200 from faq
+double r_prev_delta=1500; //400; //280; //300   200 from faq
 double r_prev_a=200; //100;  //125   10 from faq
 
 // Evaluate a polynomial.

@@ -59,8 +59,8 @@ void CoordConversion(vector<double> &pointx, vector<double> &pointy,
                      VectorXd& newpx, VectorXd& newpy)
 {
 
-            newpx = VectorXd( pointx.size() );
-           newpy = VectorXd( pointy.size() );
+//            newpx = VectorXd( pointx.size() );
+//           newpy = VectorXd( pointy.size() );
           for (size_t i=0;i<pointx.size(); i++)
           {
               double dx = pointx[i]+orig1[0] - orig2[0];
