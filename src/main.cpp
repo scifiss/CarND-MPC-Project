@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
           double epsi0 =  -atan(coeffs[1]); //psi0 -atan(mpc.polyFirstDeriv(x0))
 
            // 100ms latency
-          double latency = 0.1; // 100 ms
+          double latency = 0.15; //0.1; // 100 ms
           double Lf = 2.67; // m
           double x1 = x0 + v0*cos(psi0)*latency;
           double y1 = y0 + v0*sin(psi0)*latency;
